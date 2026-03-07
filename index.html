@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>엑셀 내 상품 리스트 txt 변환하기</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: "Pretendard", "Noto Sans KR", sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #f6f8ff, #eef2ff);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .container {
+        background: #ffffff;
+        padding: 40px;
+        width: 420px;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 20px;
+        margin-bottom: 25px;
+        font-weight: 700;
+        color: #333;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      .file-label {
+        display: inline-block;
+        padding: 12px 20px;
+        background: #f1f3ff;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.2s;
+      }
+
+      .file-label:hover {
+        background: #e0e6ff;
+      }
+
+      button {
+        margin-top: 20px;
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 12px;
+        background: #5b6cff;
+        color: white;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+
+      button:hover {
+        background: #4353e6;
+        transform: translateY(-2px);
+      }
+
+      .footer {
+        margin-top: 18px;
+        font-size: 12px;
+        color: #888;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📦 라방 상품 TXT 변환기</h1>
+
+      <label for="txtFile" class="file-label"> 📂 TXT 파일 선택 </label>
+      <input type="file" id="txtFile" accept=".txt" />
+
+      <button onclick="convertTXT()">TXT 생성하기</button>
+
+      <div class="footer">XXS~JL 자동 정리 · JL 가격 자동 체크</div>
+    </div>
+  </body>
+</html>
+
+<script>
+  function convertTXT() {
+    const file = document.getElementById("txtFile").files[0];
+    if (!file) {
+      alert("파일 선택하세요");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      const lines = e.target.result
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      const grouped = {};
+
+      lines.forEach((line) => {
+        const cols = line.split("\t");
+
+        const name = cols[0];
+        const color = cols[1];
+        const size = cols[2];
+        const price = cols[4];
+        const live = cols[5];
+
+        if (!grouped[name]) {
+          grouped[name] = {
+            colors: new Set(),
+            sizes: new Set(),
+            price,
+            defaultLive: live,
+            jlLive: null,
+          };
+        }
+
+        grouped[name].colors.add(color);
+        grouped[name].sizes.add(size);
+
+        if (size === "JL" || size === "JM") {
+          grouped[name].jlLive = live;
+        }
+      });
+
+      let output = "";
+
+      Object.keys(grouped).forEach((name) => {
+        const colors = Array.from(grouped[name].colors).join("/");
+        const price = grouped[name].price;
+        const live = grouped[name].defaultLive;
+        const jlLive = grouped[name].jlLive;
+
+        // 🔥 괄호 조건 처리
+        let priceLine = "";
+
+        if (jlLive && jlLive !== live) {
+          priceLine = `${price}>🎉라방할인가${live}원(주니어 ${jlLive}원)`;
+        } else {
+          priceLine = `${price}>🎉라방할인가${live}원`;
+        }
+
+        // 사이즈 범위 계산 - 사이즈 추가 원할 경우 추가하면 됌
+        const sizeOrder = [
+          "XXS",
+          "XS",
+          "S",
+          "M",
+          "L",
+          "XL",
+          "JS",
+          "JM",
+          "JL",
+          "6M",
+          "12M",
+          "18M",
+          "bebeS",
+          "bebeM",
+          "ADULT",
+          "FREE",
+          "3호",
+          "5호",
+          "7호",
+          "9호",
+          "11호",
+          "13호",
+        ];
+        const sizes = Array.from(grouped[name].sizes);
+        const sortedSizes = sizeOrder.filter((s) => sizes.includes(s));
+
+        const sizeRange =
+          sortedSizes.length > 1
+            ? `${sortedSizes[0]}~${sortedSizes[sortedSizes.length - 1]}`
+            : sortedSizes[0];
+
+        output += `${name}\n`;
+        output += `${priceLine}\n`;
+        output += `${colors}\n`;
+        output += `${sizeRange}\n\n`;
+      });
+
+      downloadTxt(output);
+    };
+
+    reader.readAsText(file, "utf-8");
+  }
+
+  function downloadTxt(content) {
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "라방상품.txt";
+    link.click();
+  }
+</script>
