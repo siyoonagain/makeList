@@ -145,13 +145,46 @@
         const live = grouped[name].defaultLive;
         const jlLive = grouped[name].jlLive;
 
-        // 🔥 괄호 조건 처리
-        let priceLine = "";
+        // 🔥 가격 계산
+        let extra = [];
 
+        // 주니어 가격
         if (jlLive && jlLive !== live) {
-          priceLine = `${price}>🎉라방할인가${live}원(주니어 ${jlLive}원)`;
-        } else {
-          priceLine = `${price}>🎉라방할인가${live}원`;
+          extra.push(`주니어 ${jlLive}원`);
+        }
+
+        // 색상 가격 체크
+        const colorPrices = {};
+
+        lines.forEach((line) => {
+          const cols = line.split("\t");
+
+          if (cols[0] === name) {
+            const color = cols[1];
+            const size = cols[2];
+            const livePrice = cols[5];
+
+            // 주니어 제외
+            if (!["JS", "JM", "JL"].includes(size)) {
+              if (!colorPrices[color]) {
+                colorPrices[color] = livePrice;
+              }
+            }
+          }
+        });
+
+        Object.keys(colorPrices).forEach((color) => {
+          const colorLive = colorPrices[color];
+
+          if (colorLive !== live) {
+            extra.push(`${color} ${colorLive}원`);
+          }
+        });
+
+        let priceLine = `${price}>🎉라방할인가${live}원`;
+
+        if (extra.length) {
+          priceLine += `(${extra.join(" / ")})`;
         }
 
         // 사이즈 범위 계산 - 사이즈 추가 원할 경우 추가하면 됌
