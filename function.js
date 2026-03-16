@@ -37,7 +37,7 @@ function convertTXT() {
       grouped[name].colors.add(color);
       grouped[name].sizes.add(size);
 
-      if (size === "JL" || size === "JM") {
+      if (size === "JL" || size === "JM" || size === "JS") {
         grouped[name].jlLive = live;
       }
     });
