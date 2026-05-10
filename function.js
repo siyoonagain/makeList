@@ -50,15 +50,12 @@ function convertTXT() {
       const live = grouped[name].defaultLive;
       const jlLive = grouped[name].jlLive;
 
-      // 🔥 가격 계산
       let extra = [];
 
-      // 주니어 가격
       if (jlLive && jlLive !== live) {
         extra.push(`주니어 ${jlLive}원`);
       }
 
-      // 색상 가격 체크
       const colorPrices = {};
 
       lines.forEach((line) => {
@@ -69,7 +66,6 @@ function convertTXT() {
           const size = cols[2];
           const livePrice = cols[5];
 
-          // 주니어 제외
           if (!["JS", "JM", "JL"].includes(size)) {
             if (!colorPrices[color]) {
               colorPrices[color] = livePrice;
@@ -92,7 +88,6 @@ function convertTXT() {
         priceLine += `(${extra.join(" / ")})`;
       }
 
-      // 사이즈 범위 계산 - 사이즈 추가 원할 경우 추가하면 됌
       const sizeOrder = [
         "XXS",
         "XS",
@@ -100,16 +95,31 @@ function convertTXT() {
         "M",
         "L",
         "XL",
+        "2XL",
+        "3XL",
+
+        "S(100)",
+        "M(110)",
+        "L(120)",
+        "XL(130)",
+        "2XL(140)",
+        "3XL(150)",
+
         "JS",
         "JM",
         "JL",
+
         "6M",
         "12M",
         "18M",
+
         "bebeS",
         "bebeM",
+
         "ADULT",
         "FREE",
+        "one size",
+
         "3호",
         "5호",
         "7호",
@@ -117,13 +127,24 @@ function convertTXT() {
         "11호",
         "13호",
       ];
+
       const sizes = Array.from(grouped[name].sizes);
       const sortedSizes = sizeOrder.filter((s) => sizes.includes(s));
 
-      const sizeRange =
-        sortedSizes.length > 1
-          ? `${sortedSizes[0]}~${sortedSizes[sortedSizes.length - 1]}`
-          : sortedSizes[0];
+      let sizeRange = "";
+
+      if (sortedSizes.length === 1) {
+        sizeRange = sortedSizes[0];
+      } else if (
+        sortedSizes.length === 3 &&
+        sortedSizes.includes("S") &&
+        sortedSizes.includes("M") &&
+        sortedSizes.includes("L")
+      ) {
+        sizeRange = "S/M/L";
+      } else {
+        sizeRange = `${sortedSizes[0]}~${sortedSizes[sortedSizes.length - 1]}`;
+      }
 
       output += `${name}\n`;
       output += `${priceLine}\n`;
